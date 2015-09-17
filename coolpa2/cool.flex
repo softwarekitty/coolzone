@@ -56,7 +56,25 @@ extern YYSTYPE cool_yylval;
  */
 
 DARROW          =>
-
+CLASS           [c][l][a][s][s]
+IF              [i][f]
+THEN            [t][h][e][n]
+FI              [f][i]
+WHILE           [w][h][i][l][e]
+LOOP            [l][o][o][p]
+POOL            [p][o][o][l]
+LET             [l][e][t]
+IN              [i][n]
+CASE            [c][a][s][e]
+OF              [o][f]
+NEW             [n][e][w]
+ISVOID          [i][s][v][o][i][d]
+NOT             [n][o][t]
+TRUE            [t][r][u][e]
+ELSE            [e][l][s][e]
+FALSE           [f][a][l][s][e]
+INHERITS        [i][n][h][e][r][i][t][s]
+ESAC            [e][s][a][c]
 %%
 [ \t]+  ;
 
