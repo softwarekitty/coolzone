@@ -184,15 +184,18 @@ TYPE            [A-Z][a-zA-Z0-9_]*
                         BEGIN(string); 
                     }
 <string>\"          {
+                        /* go back to using regular rules instead of string rules */
+                        BEGIN(INITIAL);
                         if (string_length < MAX_STR_CONST ) {
-                            cool_yylval.symbol = stringtable.add_string(string_buf);
                             *string_buf_ptr = '\0';
+                            cool_yylval.symbol = stringtable.add_string(string_buf);
                             return (STR_CONST);
                         } else {
                             cool_yylval.error_msg = "String constant is longer than the buffer";
                             return (ERROR);
                         }
                     }
+
 <string>\\n         {
                         string_length++;
                         if ( string_length < MAX_STR_CONST ) {
@@ -206,7 +209,7 @@ TYPE            [A-Z][a-zA-Z0-9_]*
 <string>.           {
                         string_length++;
                         if ( string_length < MAX_STR_CONST ) {
-                            *string_buf_ptr++ = '\n';
+                            *string_buf_ptr++ = *yytext;
                         }
                     } 
   
