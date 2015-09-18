@@ -91,9 +91,10 @@ NOT             (?i:not)
 TRUE            ([t][rR][uU][eE])
 
 /*
- * Whitespace as defined in cool manual 10.5
+ * Whitespace as defined in cool manual 10.5, excepting the newline, which is used to count lines
  */
-WSP             [ \n\f\r\t\v]+
+WSP             [ \f\r\t\v]+
+NEWLINE         \n
 
 
 DIGIT           [0-9]
@@ -161,13 +162,16 @@ TYPE            [A-Z][a-zA-Z0-9_]*
 {NEW}             { return (NEW); }
 {OF}              { return (OF); }
 
- /*
-  * TODO - some way to get the constant through as a token
-  */
   
-{TRUE}            { return (BOOL_CONST); }
+{TRUE}              { 
+                        cool_yylval.boolean = true;
+                        return (BOOL_CONST); 
+                    }
 
-{FALSE}           { return (BOOL_CONST); }
+{FALSE}             { 
+                        cool_yylval.boolean = false;
+                        return (BOOL_CONST); 
+                    }
 
 
 
@@ -224,5 +228,10 @@ TYPE            [A-Z][a-zA-Z0-9_]*
                         cool_yylval.symbol = idtable.add_string(yytext);
                         return (OBJECTID);
                     }
+                    
+{NEWLINE}           {
+                        curr_lineno++;  
+                    }
+{WSP}               ;
 
 %%
