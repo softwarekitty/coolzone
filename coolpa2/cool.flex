@@ -60,6 +60,10 @@ extern YYSTYPE cool_yylval;
  */
  
  int comment_level = 0;
+ 
+ /*track end of file*/
+bool isEOF = false;
+bool isNULL = false;
 
 %}
 
@@ -102,12 +106,25 @@ TRUE            ([t][rR][uU][eE])
 WSP             [ \f\r\t\v]+
 NEWLINE         \n
 
+
+ESCAPE_CHAR     \"
+ESCAPE          \\.
+NULL_REF        \0
+NCHR            [^"\\\n]
+NEW_LINE_ERROR  \\\n
+END             \"
+
 INLINE          --.*
 
 
 DIGIT           [0-9]
 ID              [a-z][a-zA-Z0-9_]*
 TYPE            [A-Z][a-zA-Z0-9_]*
+
+COM_START       \(\*+
+COM_NONSTART    [^*\n(\\]* 
+COM_STARS_OK    \*+[^)]
+COM_END         \*+\) 
 
 
 
@@ -117,19 +134,29 @@ TYPE            [A-Z][a-zA-Z0-9_]*
  /*
   *  inline, long and Nested long comments
   */
-{INLINE}     ;
-"(*"        {
-                BEGIN(comment);
-                ++comment_level;
-            }
-<comment>"(*"   { ++comment_level; }
-
-<comment>"*)"   {
-                    comment_level--;
-                    if (comment_level == 0){
-                        BEGIN(INITIAL);
-                    }
-                }
+{INLINE}                    ;
+{COM_START}                 {
+                                BEGIN(comment);
+                                ++comment_level;
+                            }
+<comment>{COM_START}        { ++comment_level; }
+<comment>{COM_NONSTART}     ;
+<comment>{COM_STARS_OK}
+<comment>{NEWLINE}          { ++curr_lineno; }
+<comment><<EOF>>            {
+                                if (isEOF){
+                                    yyterminate();
+                                }
+                                isEOF = true;
+                                cool_yylval.error_msg = "EOF in comment";
+                                return (ERROR);
+                            }
+<comment>{COM_END}          {
+                                comment_level--;
+                                if (comment_level == 0){
+                                    BEGIN(INITIAL);
+                                }
+                            }
 
 
  /*
@@ -238,13 +265,16 @@ TYPE            [A-Z][a-zA-Z0-9_]*
                         }
                     } 
   
-   
-  
 {TYPE}              {
                         cool_yylval.symbol = idtable.add_string(yytext);
                         return (TYPEID);
                     }
                     
+{DIGIT}+            {
+                        cool_yylval.symbol = inttable.add_string(yytext); 
+                        return (INT_CONST);
+                    }
+                  
 {ID}                {
                         cool_yylval.symbol = idtable.add_string(yytext);
                         return (OBJECTID);
