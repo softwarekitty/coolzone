@@ -85,7 +85,7 @@ WSP             [ \n\f\r\t\v]+
 
 
 DIGIT           [:digit:]
-ID              [:lower:][a-zA-Z0-9_]*
+OBJECTID        [a-z][a-zA-Z0-9_]*
 TYPE            [:upper:][a-zA-Z0-9_]*
 
 %%
@@ -119,7 +119,7 @@ TYPE            [:upper:][a-zA-Z0-9_]*
  /*
   *  blocks.
   */
-"{"		{ return '}'; }
+"{"		{ return '{'; }
 "}"		{ return '}'; }
 ";"		{ return ';'; }
 
@@ -163,18 +163,9 @@ TYPE            [:upper:][a-zA-Z0-9_]*
   *  \n \t \b \f, the result is c.
   *
   */
-{ID}                { return (OBJECTID); }
-{TYPE}              { return (TYPEID); }
-  
- /*
-  * eat all whitespace
-  */
-{WSP}               ;
 
- /*
-  * nothing should remain, everything else is an error
-  */
-.                   { return (ERROR); }
+
+  
 
 
 
