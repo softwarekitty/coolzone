@@ -163,6 +163,19 @@ TYPE            [:upper:][a-zA-Z0-9_]*
   *  \n \t \b \f, the result is c.
   *
   */
+{ID}                { return (OBJECTID); }
+{TYPE}              { return (TYPEID); }
+  
+ /*
+  * eat all whitespace
+  */
+{WSP}               ;
+
+ /*
+  * nothing should remain, everything else is an error
+  */
+.                   { return (ERROR); }
+
 
 
 %%
