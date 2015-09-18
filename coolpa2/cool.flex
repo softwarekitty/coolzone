@@ -49,19 +49,10 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
  
- /*
- *  Keep the contract for MAX_STR_CONST
- */
- 
- int string_length = 0;
 
 %}
 
- /*
-  *  Exclusive states (%x) switch to using only their rules, necessary for strings that
-  *  could contain keywords.
-  */
-%x string
+
 
  /*
  * Keywords from cool manual 10.4, in same order
@@ -180,7 +171,7 @@ TYPE            [A-Z][a-zA-Z0-9_]*
   
    
   
-{TYPE}              { return (TYPEID); } /* printf( "A type: %s\n", yytext ); */
-{ID}                { return (OBJECTID); } /* printf( "An identifier: %s\n", yytext ); */
+{TYPE}              printf( "A type: %s\n", yytext );
+{ID}                printf( "An identifier: %s\n", yytext );
 
 %%
