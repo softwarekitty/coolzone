@@ -1,0 +1,12 @@
+#!/bin/bash
+for f in *.cl
+do
+    if [[ $# = 0 ]]  
+    then 
+        echo "number of lines of diff for: $f"
+        diff -U 0 <(./lexer $f) <(./targetLexer $f) | grep ^@ | wc -l
+    else
+        echo "diffing lexer output for: $f"
+        diff <(./lexer $f) <(./targetLexer $f)
+    fi
+done
