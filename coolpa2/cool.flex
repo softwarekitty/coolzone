@@ -60,7 +60,7 @@ extern YYSTYPE cool_yylval;
  */
 CLASS           (?i:class)
 ELSE            (?i:else)
-FALSE           [f][aA][lL][sS][eE]
+FALSE           ([f][aA][lL][sS][eE])
 FI              (?i:fi)
 IF              (?i:if)
 IN              (?i:in)
@@ -76,7 +76,7 @@ ESAC            (?i:esac)
 NEW             (?i:new)
 OF              (?i:of)
 NOT             (?i:not)
-TRUE            [t][rR][uU][eE]
+TRUE            ([t][rR][uU][eE])
 
 /*
  * Whitespace as defined in cool manual 10.5
@@ -100,8 +100,8 @@ TYPE            [:upper:][a-zA-Z0-9_]*
   *  The (non-keyword) operators, in the order presented in figure 10.
   */
 ":"		{ return ':'; }
-"<-"	{ return 'ASN'; }
-"@'     { return '@'; }
+"<-"	{ return (ASSIGN); }
+"@"     { return '@'; }
 "."		{ return '.'; }
 ","		{ return ','; }
 "=>"	{ return (DARROW); }
@@ -133,7 +133,6 @@ TYPE            [:upper:][a-zA-Z0-9_]*
 
 {CLASS}           { return (CLASS); }
 {ELSE}            { return (ELSE); }
-{FALSE}           { return (FALSE); }
 {FI}              { return (FI); }
 {IF}              { return (IF); }
 {IN}              { return (IN); }
@@ -147,7 +146,15 @@ TYPE            [:upper:][a-zA-Z0-9_]*
 {ESAC}            { return (ESAC); }
 {NEW}             { return (NEW); }
 {OF}              { return (OF); }
-{TRUE}            { return (TRUE); }
+
+ /*
+  * TODO - some way to get the constant through as a token
+  */
+  
+{TRUE}            { return (BOOL_CONST); }
+
+{FALSE}           { return (BOOL_CONST); }
+
 
 
  /*
