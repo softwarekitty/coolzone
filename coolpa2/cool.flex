@@ -48,11 +48,23 @@ extern YYSTYPE cool_yylval;
 /*
  *  Add Your own definitions here
  */
+ 
+ /*
+ *  Keep the contract for MAX_STR_CONST
+ */
+ 
+ int string_length = 0;
 
 %}
 
-/*
- * Define names for regular expressions here.
+ /*
+  *  Exclusive states (%x) switch to using only their rules, necessary for strings that
+  *  could contain keywords.
+  */
+%x string
+
+ /*
+ * Keywords from cool manual 10.4, in same order
  */
 
 /*
@@ -85,14 +97,16 @@ WSP             [ \n\f\r\t\v]+
 
 
 DIGIT           [:digit:]
-OBJECTID        [a-z][a-zA-Z0-9_]*
-TYPE            [:upper:][a-zA-Z0-9_]*
+ID              [a-z][a-zA-Z0-9_]*
+TYPE            [A-Z][a-zA-Z0-9_]*
+
+
 
 %%
 
 
  /*
-  *  Nested comments
+  *  TODO -  Nested comments
   */
 
 
@@ -163,10 +177,10 @@ TYPE            [:upper:][a-zA-Z0-9_]*
   *  \n \t \b \f, the result is c.
   *
   */
-
-
   
-
-
+   
+  
+{TYPE}              { return (TYPEID); } /* printf( "A type: %s\n", yytext ); */
+{ID}                { return (OBJECTID); } /* printf( "An identifier: %s\n", yytext ); */
 
 %%
