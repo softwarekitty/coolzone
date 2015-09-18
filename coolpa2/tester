@@ -1,5 +1,5 @@
 #!/bin/bash
-for f in *.cl
+for f in tests/*.cl
 do
     if [[ $# = 0 ]]  
     then 

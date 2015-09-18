@@ -54,6 +54,12 @@ extern YYSTYPE cool_yylval;
  */
  
  int string_length = 0;
+ 
+  /*
+ *  track nested comments
+ */
+ 
+ int comment_level = 0;
 
 %}
 
@@ -61,7 +67,7 @@ extern YYSTYPE cool_yylval;
   *  Exclusive states (%x) switch to using only their rules, necessary for strings that
   *  could contain keywords.
   */
-%x string
+%x string comment
 
  /*
  * Keywords from cool manual 10.4, in same order
@@ -96,6 +102,8 @@ TRUE            ([t][rR][uU][eE])
 WSP             [ \f\r\t\v]+
 NEWLINE         \n
 
+INLINE          --.*
+
 
 DIGIT           [0-9]
 ID              [a-z][a-zA-Z0-9_]*
@@ -107,8 +115,21 @@ TYPE            [A-Z][a-zA-Z0-9_]*
 
 
  /*
-  *  TODO -  Nested comments
+  *  inline, long and Nested long comments
   */
+{INLINE}     ;
+"(*"        {
+                BEGIN(comment);
+                ++comment_level;
+            }
+<comment>"(*"   { ++comment_level; }
+
+<comment>"*)"   {
+                    comment_level--;
+                    if (comment_level == 0){
+                        BEGIN(INITIAL);
+                    }
+                }
 
 
  /*
