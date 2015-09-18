@@ -1,0 +1,7 @@
+actually, mycoolc is just a shell using 'csh' - try reading the file to see the piped script.
+surprise!  you will need to install csh to use this program.
+>sudo apt-get install csh
+then...
+>./mycoolc someCoolFile.cl
+>./spim -file someCoolFile.s
+and you are done testing and running the file.  Perhaps we should automate this?
