@@ -55,30 +55,38 @@ extern YYSTYPE cool_yylval;
  * Define names for regular expressions here.
  */
 
-DARROW          =>
+/*
+ * Keywords from cool manual 10.4, in same order
+ */
 CLASS           (?i:class)
-IF              (?i:if)
-THEN            (?i:then)
+ELSE            (?i:else)
+FALSE           [f][aA][lL][sS][eE]
 FI              (?i:fi)
-WHILE           (?i:while)
+IF              (?i:if)
+IN              (?i:in)
+INHERITS        (?i:inherits)
+ISVOID          (?i:isvoid)
+LET             (?i:let)
 LOOP            (?i:loop)
 POOL            (?i:pool)
-LET             (?i:let)
-IN              (?i:in)
+THEN            (?i:then)
+WHILE           (?i:while)
 CASE            (?i:case)
-OF              (?i:of)
-NEW             (?i:new)
-ISVOID          (?i:isvoid)
-NOT             (?i:not)
-TRUE            (?i:true)
-ELSE            (?i:else)
-FALSE           (?i:false)
-INHERITS        (?i:inherits)
 ESAC            (?i:esac)
+NEW             (?i:new)
+OF              (?i:of)
+NOT             (?i:not)
+TRUE            [t][rR][uU][eE]
+
+/*
+ * Whitespace as defined in cool manual 10.5
+ */
+WSP             [ \n\f\r\t\v]+
+
+
 DIGIT           [:digit:]
 ID              [:lower:][a-zA-Z0-9_]*
 TYPE            [:upper:][a-zA-Z0-9_]*
-WSP             [ \t\r\f\v]+
 
 %%
 
@@ -89,14 +97,57 @@ WSP             [ \t\r\f\v]+
 
 
  /*
-  *  The multiple-character operators.
+  *  The (non-keyword) operators, in the order presented in figure 10.
   */
-{DARROW}		{ return (DARROW); }
+":"		{ return ':'; }
+"<-"	{ return 'ASN'; }
+"@'     { return '@'; }
+"."		{ return '.'; }
+","		{ return ','; }
+"=>"	{ return (DARROW); }
+"+"		{ return '+'; }
+"-"		{ return '-'; }
+"*"		{ return '*'; }
+"/"		{ return '/'; }
+"~"		{ return '~'; }
+"<"		{ return '<'; }
+"<="	{ return 'LE'; }
+"="		{ return '='; }
+"("		{ return '('; }
+")"		{ return ')'; }
+
+ /*
+  *  blocks.
+  */
+"{"		{ return '}'; }
+"}"		{ return '}'; }
+";"		{ return ';'; }
 
  /*
   * Keywords are case-insensitive except for the values true and false,
-  * which must begin with a lower-case letter.
+  * which must begin with a lower-case letter.  Operator-like keywords are first.
   */
+  
+{NOT}	        { return (NOT); }
+{ISVOID}        { return (ISVOID); }
+
+{CLASS}           { return (CLASS); }
+{ELSE}            { return (ELSE); }
+{FALSE}           { return (FALSE); }
+{FI}              { return (FI); }
+{IF}              { return (IF); }
+{IN}              { return (IN); }
+{INHERITS}        { return (INHERITS); }
+{LET}             { return (LET); }
+{LOOP}            { return (LOOP); }
+{POOL}            { return (POOL); }
+{THEN}            { return (THEN); }
+{WHILE}           { return (WHILE); }
+{CASE}            { return (CASE); }
+{ESAC}            { return (ESAC); }
+{NEW}             { return (NEW); }
+{OF}              { return (OF); }
+{TRUE}            { return (TRUE); }
 
 
  /*
