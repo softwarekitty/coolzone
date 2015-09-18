@@ -49,10 +49,19 @@ extern YYSTYPE cool_yylval;
  *  Add Your own definitions here
  */
  
+ /*
+ *  Keep the contract for MAX_STR_CONST by counting string constant chars
+ */
+ 
+ int string_length = 0;
 
 %}
 
-
+ /*
+  *  Exclusive states (%x) switch to using only their rules, necessary for strings that
+  *  could contain keywords.
+  */
+%x string
 
  /*
  * Keywords from cool manual 10.4, in same order
@@ -87,7 +96,7 @@ TRUE            ([t][rR][uU][eE])
 WSP             [ \n\f\r\t\v]+
 
 
-DIGIT           [:digit:]
+DIGIT           [0-9]
 ID              [a-z][a-zA-Z0-9_]*
 TYPE            [A-Z][a-zA-Z0-9_]*
 
@@ -169,9 +178,48 @@ TYPE            [A-Z][a-zA-Z0-9_]*
   *
   */
   
+\"                  { 
+                        string_buf_ptr = string_buf;
+                        string_length = 0;
+                        BEGIN(string); 
+                    }
+<string>\"          {
+                        if (string_length < MAX_STR_CONST ) {
+                            cool_yylval.symbol = stringtable.add_string(string_buf);
+                            *string_buf_ptr = '\0';
+                            return (STR_CONST);
+                        } else {
+                            cool_yylval.error_msg = "String constant is longer than the buffer";
+                            return (ERROR);
+                        }
+                    }
+<string>\\n         {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\n';
+                        }
+                    }
+ 
+ /*
+  * put this ANY dot last so that specific chars are visible
+  */                   
+<string>.           {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\n';
+                        }
+                    } 
+  
    
   
-{TYPE}              printf( "A type: %s\n", yytext );
-{ID}                printf( "An identifier: %s\n", yytext );
+{TYPE}              {
+                        cool_yylval.symbol = idtable.add_string(yytext);
+                        return (TYPEID);
+                    }
+                    
+{ID}                {
+                        cool_yylval.symbol = idtable.add_string(yytext);
+                        return (OBJECTID);
+                    }
 
 %%
