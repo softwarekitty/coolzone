@@ -104,29 +104,31 @@ TRUE            ([t][rR][uU][eE])
  * Whitespace as defined in cool manual 10.5, excepting the newline, which is used to count lines
  */
 WSP             [ \f\r\t\v]+
+ANY             .
 NEWLINE         \n
+NULL            \0
+DBLQT           \"
 
-
-ESCAPE_CHAR     \"
+ESCNEW          \\n
+ESCTAB          \\t
+ESCFEED         \\f
+ESCBACK         \\b
+ESCNULL         \\0
 ESCAPE          \\.
-NULL_REF        \0
-NCHR            [^"\\\n]
-NEW_LINE_ERROR  \\\n
-END             \"
 
-INLINE          --.*
-
+NONESC          [^"\0\\\n]+
+SLASHNL         \\\n
 
 DIGIT           [0-9]
 ID              [a-z][a-zA-Z0-9_]*
 TYPE            [A-Z][a-zA-Z0-9_]*
 
+INLINE          --.*
 COM_START       \(\*+
+COM_PARENESC    [(\\][^*\n]*
 COM_NONSTART    [^*\n(\\]* 
-COM_STARS_OK    \*+[^)]
+COM_NONEND      \*+[^*\n)\\]* 
 COM_END         \*+\) 
-
-
 
 %%
 
@@ -140,8 +142,10 @@ COM_END         \*+\)
                                 ++comment_level;
                             }
 <comment>{COM_START}        { ++comment_level; }
+    /* PARENESC, NONSTART and NONEND match the inside of the comments without matching the delimiters */
+<comment>{COM_PARENESC}     ;
 <comment>{COM_NONSTART}     ;
-<comment>{COM_STARS_OK}
+<comment>{COM_NONEND}       ;
 <comment>{NEWLINE}          { ++curr_lineno; }
 <comment><<EOF>>            {
                                 if (isEOF){
@@ -156,6 +160,10 @@ COM_END         \*+\)
                                 if (comment_level == 0){
                                     BEGIN(INITIAL);
                                 }
+                            }
+{COM_END}                   {
+                                cool_yylval.error_msg = "Unmatched *)";
+                                return (ERROR);
                             }
 
 
@@ -230,40 +238,104 @@ COM_END         \*+\)
   *
   */
   
-\"                  { 
+{DBLQT}             { 
                         string_buf_ptr = string_buf;
                         string_length = 0;
+                        isNULL = false;
                         BEGIN(string); 
                     }
-<string>\"          {
+<string>{DBLQT}     {
                         /* go back to using regular rules instead of string rules */
                         BEGIN(INITIAL);
-                        if (string_length < MAX_STR_CONST ) {
+                        if (isNULL) {
+                            cool_yylval.error_msg = "String contains null character";
+                            return (ERROR);
+                        }
+                        else if (string_length < MAX_STR_CONST ) {
                             *string_buf_ptr = '\0';
                             cool_yylval.symbol = stringtable.add_string(string_buf);
                             return (STR_CONST);
                         } else {
-                            cool_yylval.error_msg = "String constant is longer than the buffer";
+                            cool_yylval.error_msg = "String constant too long";
                             return (ERROR);
                         }
                     }
-
-<string>\\n         {
+<string>{NULL}      { isNULL = true; }
+<string>{ESCNULL}   {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\0';
+                        }
+                    }
+<string>{ESCFEED}   {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\r';
+                        }
+                    }
+<string>{ESCBACK}   {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\b';
+                        }
+                    }
+<string>{ESCTAB}    {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\t';
+                        }
+                    }
+<string>{ESCNEW}    {
                         string_length++;
                         if ( string_length < MAX_STR_CONST ) {
                             *string_buf_ptr++ = '\n';
                         }
                     }
- 
- /*
-  * put this ANY dot last so that specific chars are visible
-  */                   
-<string>.           {
+<string>{ESCAPE}    {
+                        char escaped = *(yytext+1);
+                        if ( escaped == '\0' ){
+                            isNULL=true;
+                        } 
                         string_length++;
                         if ( string_length < MAX_STR_CONST ) {
-                            *string_buf_ptr++ = *yytext;
+                            *string_buf_ptr++ = escaped;
                         }
-                    } 
+                    }
+<string>{NEWLINE}   {
+                        BEGIN(INITIAL);
+                        ++curr_lineno;
+                        cool_yylval.error_msg = "Unterminated string constant";
+                        return (ERROR);
+                    }
+<string>{SLASHNL}   {
+                        string_length++;
+                        if ( string_length < MAX_STR_CONST ) {
+                            *string_buf_ptr++ = '\n';
+                        }
+                        curr_lineno++;
+                    }
+                    
+<string>{NONESC}    {
+                        char* matchChar = yytext;
+                        while(*matchChar) {
+                            string_length++;
+                            if(string_length < MAX_STR_CONST ) {
+                                *string_buf_ptr++ = *matchChar++;
+                            }else{
+                                *matchChar++;
+                            }
+                        }
+                    }
+<string><<EOF>>     {
+                        if(!isEOF)
+                        {
+                            cool_yylval.error_msg = "EOF in string constant";
+                            isEOF = true;
+                            return (ERROR);
+                        }else{
+                            yyterminate();
+                        }
+                    }
   
 {TYPE}              {
                         cool_yylval.symbol = idtable.add_string(yytext);
@@ -284,5 +356,10 @@ COM_END         \*+\)
                         curr_lineno++;  
                     }
 {WSP}               ;
+
+{ANY}               {
+                        cool_yylval.error_msg = yytext;
+                        return (ERROR);
+                    }
 
 %%
